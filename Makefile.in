@@ -96,7 +96,7 @@ CFLAGS	+= $(CCOPT) $(DEFINE)
 
 GEN_DIR	= gen/
 LIB_DIR	= lib/
-NS	= matcp
+NS	= notcp
 NSX	= nsx
 NSE	= nse
 

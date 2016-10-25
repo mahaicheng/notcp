@@ -66,6 +66,18 @@ public:
 	PacketQueue() : head_(0), tail_(0), len_(0), bytes_(0) {}
 #endif
 	virtual int length() const { return (len_); }
+	int DataLength() const
+	{
+		int count = 0;
+		for (Packet *p = head_; p != nullptr; p = p->next_)
+		{
+			if (!HDR_CMN(p)->control_packet())
+			{
+				count++;
+			}
+		}
+		return count;
+	}
     double avg_length() const
 	{ 
 		if (intervals.empty())
@@ -222,6 +234,10 @@ public:
         return pq_->avg_length();
     }
 
+    int DataLength() const
+    {
+		return pq_->DataLength();
+	}
 #endif
 
 	int byteLength() { return pq_->byteLength(); }	/* number of bytes *

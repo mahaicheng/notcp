@@ -88,6 +88,8 @@ private:
         Mac802_11* p_to_mac;
 		TcpSendTimer sendTimer_;
 		bool needRetransmit;
+		int send_rate; 	// unit: kbps
+		double timer_interval;
 		
 		// debug
 		int congestedCount;

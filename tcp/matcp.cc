@@ -67,6 +67,8 @@ MaTcpAgent::MaTcpAgent() :
 			p_to_mac(nullptr),
 			sendTimer_(this),
 			needRetransmit(false),
+			send_rate(0),
+			timer_interval(0.0),
 			congestedCount(0),
 			retryCount(0),
 			maxRetryCount(0),
@@ -77,7 +79,11 @@ MaTcpAgent::MaTcpAgent() :
 			underFlowCount(0),
 			notChangeTimeCount(0)
 { 
+	bind("sendRate", &send_rate);
+	assert(send_rate > 0);
 	
+	int pkt_size = 512;
+	timer_interval = 8.0 * pkt_size / (send_rate * 1000);
 }
 
 void MaTcpAgent::recv(Packet *pkt, Handler *h)
@@ -134,10 +140,10 @@ void MaTcpAgent::recv(Packet *pkt, Handler *h)
 	//if (valid_ack || aggressive_maxburst_)
 		//send_much(0, 0, maxburst_);
 		
-	if (sendTimer_.status() == TIMER_IDLE)
+	/*if (sendTimer_.status() == TIMER_IDLE)
 	{
 		setSendTimer();
-	}
+	}*/
 }
 
 void MaTcpAgent::send_much(int force, int reason, int maxburst)
@@ -163,14 +169,19 @@ void MaTcpAgent::send_much(int force, int reason, int maxburst)
 		printf("unable to send a packet!!!\n");
 	}*/
 		
+	if (sendTimer_.status() == TIMER_IDLE)
+	{
+		sendTimer_.resched(timer_interval);
+	}
+	
 	/* call helper function */
 	send_helper(maxburst);
 }
 
 void MaTcpAgent::send_timeout()
 {
-	if (p_to_mac->local_congested())
-		return;
+	/*if (p_to_mac->local_congested())
+		return;*/
 	
 	if (needRetransmit)
 	{
@@ -182,6 +193,9 @@ void MaTcpAgent::send_timeout()
 	{
 		send_much(1, 0, 1);
 	}
+	
+	assert(sendTimer_.status() == TIMER_IDLE);
+	sendTimer_.resched(timer_interval);
 	// Do not need to reschedule sendTimer. MAC will reschedule it.
 	//reset_cw();
 }
@@ -324,6 +338,8 @@ void MaTcpAgent::send_one()
 
 void MaTcpAgent::setSendTimer()
 {
+	return;	// nothing to do
+	
 	//        3*sifs + rts + cts + data + ack
 	// 			3288 + 1240 = 4528
 	//double data = 24 + 256 + 256 + 2496 + 256;
@@ -339,14 +355,14 @@ void MaTcpAgent::setSendTimer()
 		if (sendTime_ > minSendTime_ * 2.0)
 		{
 			incrTimeCount++;
-			time += 0.00005; 	// decrease sending rate. origin = 0.00001
+			time += 0.00001; 	// decrease sending rate. origin = 0.00001
 		}
 		else if (sendTime_ < minSendTime_ * 1.9)
 		{
-			if (time >= 0.00005)
+			if (time >= 0.00001)
 			{
 			decrTimeCount++;
-			time -= 0.00005; 	// increase sending rate. 
+			time -= 0.00001; 	// increase sending rate. 
 			}
 			else
 			{
