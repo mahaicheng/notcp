@@ -81,7 +81,6 @@ MaTcpAgent::MaTcpAgent() :
 { 
 	bind("sendRate", &send_rate);
 	assert(send_rate > 0);
-	
 	int pkt_size = 512;
 	timer_interval = 8.0 * pkt_size / (send_rate * 1000);
 }
@@ -181,7 +180,10 @@ void MaTcpAgent::send_much(int force, int reason, int maxburst)
 void MaTcpAgent::send_timeout()
 {
 	/*if (p_to_mac->local_congested())
-		return;*/
+	{
+		sendTimer_.resched(timer_interval);
+		return;
+	}*/
 	
 	if (needRetransmit)
 	{
